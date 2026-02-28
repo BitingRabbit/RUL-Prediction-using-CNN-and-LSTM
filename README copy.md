@@ -8,9 +8,9 @@ Authors: *Christoph Gahabka, Levin Singler, Jonathan Remus*
 
 ### Inhaltsverzeichnis
 
-- [Thema-Einleitung](#Thema-Einleitung)
-- [Zielsetzung-Idee](#Zielsetzung-Idee)
-- [Projektstruktu](#Projektstruktur)
+- [Themen Einleitung](#Themen-Einleitung)
+- [Zielsetzung und Idee](#Zielsetzung-und-Idee)
+- [Projektstruktur](#Projektstruktur)
 - [Dataset-Overview-Umweltwissen](#Dataset-Overview-Umweltwissen)
 - [Modul-Beschreinung](#modul-beschreibung)
 - [Konfiguration](#Konfiguration)
@@ -21,24 +21,29 @@ Authors: *Christoph Gahabka, Levin Singler, Jonathan Remus*
     - [Ergebnisse/Plotting](#Ergebnisse)
 - [LSTM-Model](#LSTM-Model)
 - [Vergleich CNN vs. LSTM](#vergleich-cnn-lstm)
-- [Datenanalyse](#Datenanalyse)
+- [Installationsanleitungen](#Installationsanleitungen)
 - [Quellen/Hilfsmittel](#Quellen-und-Hilfsmittel)
 
-## Zielsetzung
+## Themen Einleitung
 
-Ich schreibe die Einleitung basierend auf den beiden Papers und dem Kaggle-Dataset.
+Die Sicherstellung der Betriebsfähigkeit technischer Systeme ist eine der zentralen Herausforderungen in der modernen Industrie. Klassisch unterscheidet man drei Ansätze: Bei der **Reactive Maintenance** wird erst nach einem eingetretenen Ausfall gehandelt: ein Ansatz, der in sicherheitskritischen Bereichen große Risiken birgt. Die **Preventive Maintenance** begegnet diesem Problem durch regelmäßige, zeitbasierte Wartungsintervalle, verschwendet dabei jedoch Ressourcen, da Komponenten oft ausgetauscht werden, obwohl sie noch voll funktionsfähig wären. Den fortschrittlichsten Ansatz stellt die **Predictive Maintenance** dar: Wartungsmaßnahmen werden gezielt dann eingeleitet, wenn Sensordaten auf eine bevorstehende Degradation hinweisen, nicht früher, nicht später.
 
----
+Ein Schlüsselkonzept der Predictive Maintenance ist die Vorhersage der verbleibenden Nutzungsdauer, im Englischen **Remaining Useful Life (RUL)**, also die Frage, wie lange eine Komponente noch funktionsfähig bleibt, bevor ein Ausfall eintritt. Besonders in der Luftfahrt ist eine zuverlässige RUL-Schätzung von enormer Bedeutung: Ein ungeplanter Triebwerksausfall verursacht nicht nur erhebliche Kosten, sondern gefährdet im schlimmsten Fall direkt die Flugsicherheit.
 
-## Einleitung
+## Zielsetzung und Motivation
 
-Die Vorhersage der verbleibenden Nutzungsdauer (im Englischen **Remaining Useful Life** (RUL)) ist eines der zentralen Themen im Bereich *Predictive Maintenance* und *Prognostics and Health Management* (PHM). Ziel ist es, möglichst zuverlässig abzuschätzen, wie lange eine Komponente oder ein System noch funktionsfähig bleibt, bevor ein Ausfall eintritt. Dadurch lassen sich ungeplante Stillstände vermeiden, Wartungsmaßnahmen gezielt planen und die Betriebssicherheit erhöhen. Besonders in sicherheitskritischen Bereichen wie der Luftfahrt ist das von enormer Bedeutung: Ein Triebwerksausfall verursacht nicht nur hohe Kosten, sondern kann im Ernstfall direkte Auswirkungen auf die Flugsicherheit haben.
+### Zielsetzung
+
+Da wir alle drei als Duale Studenten von Airbus in dem Sektor der Luftfahrt tätig sind, welcher von einer hohen Sicherheitskultur lebt, haben wir uns entschieden, dieses Problem anzugehen.
+
+Grundsätzlich lassen sich zwei Ansätze zur RUL-Schätzung unterscheiden: **modellbasierte** und **datengetriebene Verfahren**. Modellbasierte Methoden greifen auf physikalisches Domänenwissen zurück und beschreiben den Verschleiß mithilfe expliziter Degradationsmodelle. Bei hochkomplexen Systemen wie Flugtriebwerken stoßen solche Ansätze jedoch schnell an Grenzen. Datengetriebene Methoden hingegen lernen Muster direkt aus Sensordaten. Sie profitieren von der zunehmenden Verfügbarkeit großer Datensätze und der stetig wachsenden Leistungsfähigkeit moderner Deep-Learning-Architekturen. In der Literatur haben sich insbesondere **Convolutional Neural Networks (CNN)** und **Long Short-Term Memory Netzwerke (LSTM)** als leistungsfähig erwiesen, da sie lokale Muster bzw. zeitliche Abhängigkeiten in Sensorzeitreihen effektiv erfassen können.
 
 Als Datengrundlage dient in diesem Programmentwurf der **N-CMAPSS-Datensatz** (*New Commercial Modular Aero-Propulsion System Simulation*) der NASA. Dabei handelt es sich um synthetisch erzeugte *Run-to-Failure*-Trajektorien einer kleinen Flotte von Turbofan-Triebwerken, die unter realitätsnahen Flugbedingungen simuliert wurden. Die Simulation basiert auf echten Flugprofilen eines kommerziellen Jets und bildet typische Flugphasen wie Start, Steigflug, Reiseflug und Sinkflug vollständig ab. Besonders hervorzuheben ist, dass der Degradationsprozess direkt an die jeweilige Betriebshistorie gekoppelt ist. Dadurch entstehen Daten, die dem realen Verhalten von Triebwerken deutlich näherkommen als rein abstrakte Simulationen. Pro Triebwerkseinheit stehen Messungen von 14 Sensoren, 4 Betriebsbedingungen sowie 14 virtuellen Sensoren zur Verfügung, aufgezeichnet mit einer Abtastrate von 1 Hz.
 
-Grundsätzlich lassen sich zwei Ansätze zur RUL-Schätzung unterscheiden: **modellbasierte** und **datengetriebene Verfahren**. Modellbasierte Methoden greifen auf physikalisches Domänenwissen zurück und beschreiben den Verschleiß mithilfe expliziter Degradationsmodelle. Bei hochkomplexen Systemen wie Flugtriebwerken stoßen solche Ansätze jedoch schnell an Grenzen. Datengetriebene Methoden hingegen lernen Muster direkt aus Sensordaten. Sie profitieren von der zunehmenden Verfügbarkeit großer Datensätze und der stetig wachsenden Leistungsfähigkeit moderner Deep-Learning-Architekturen. In der Literatur haben sich insbesondere **Convolutional Neural Networks (CNN)** und **Long Short-Term Memory Netzwerke (LSTM)** als leistungsfähig erwiesen, da sie lokale Muster beziehungsweise zeitliche Abhängigkeiten in Sensorzeitreihen effektiv erfassen können.
+Im Rahmen dieses Programmentwurfs werden beide Architekturen auf dem N-CMAPSS-Datensatz implementiert, trainiert und miteinander verglichen, um eine Lösung für das RUL-Problem zu entwickeln. Damit wird der Kerngedanke eines datenbasiereten, intelligenten Systems zur vorausschauenden Wartung angestrebt. Auf der andereren Seite sollte dieses Porjekt vor allem der eigenen Weiterbildung dienen. KI-Modelle kann man heutzutage innerhalb von ein paar Zeilen-Code erstellen. Wir haben es uns zur Aufgabe gemacht, große Teile des CNN selbst zu implementieren auf Basis der zugrunde liegenden und selbst hergeleiteten Mathematik. 
 
-Im Rahmen dieses Programmentwurfs werden beide Architekturen auf dem N-CMAPSS-Datensatz implementiert, trainiert und miteinander verglichen, um eine Lösung für das RUL-Problem zu entwickeln.  Damit wird der Kerngedanke eines datenbasiereten, intelligenten Systems zur vorausschauenden Wartung anschaulich veranschaulicht.
+### Motivation
+Anregung und Motivation waren erinerseits die Vorlesungen des Prof. Dr. Schneiders, welcher uns den Ansatz vermittelt hat, Konzepte wie KI-Modelle mathematisch zu verstehen und herzuleiten sowie diese selbst zu implementieren. Andererseits resultiert der Luftfahrtbezug aus unserer Anstellung als Duale Studenten bei der Airbus Defence and Space GmbH, wo Sicherheit eine große Rolle spielt und das Thema für uns über eine reine Studienarbeit hinaus Relevanz hat.
 
 ## Projektstruktur
 Das Projekt ist bewusst modular aufgebaut, um eine klare Trennung zwischen Datenverarbeitung, Modelllogik und Analyse zu gewährleisten. Der gesamte wiederverwendbare Code ist in einem eigenen src/-Paket gebündelt, sodass die einzelnen Notebooks lediglich die Hauptfunktionen und Code-Blöcke enthalten. 
@@ -49,13 +54,25 @@ projekt/
 ├── datasets/                  <- N-CMAPSS HDF5-Files
 ├── models/                    <- saved checkpoints
 ├── src/
-│   ├── data_loader.py         <- Loading, Normalisation, Dataset creation
+│   ├── data_loader.py         <- Loading, Normalization, Dataset creation
 │   └── cnn.py                 <- Model loading, Evaluation
 ├── cnn_model.ipynb            <- CNN Training & Demo
 ├── lstm_model.ipynb           <- LSTM Training & Demo
 ├── data_analysis.ipynb        <- EDA, Visualisations
 └── overview.ipynb             <- Overview of findings
 ```
+
+Den Kern bilden die Jupiter Notebooks:
+- eins zur Datenanalyse
+- eins zum selbst implementierten CNN-Model
+- eins zum LSTM-Modell
+
+Somit ist der Programmablauf klar definiert:
+- vorab steht immer eine Analyse des zugrunde liegenden Datensatzes, um die wichtigsten Features zu extrahieren
+- daraufhin folgt die Bearbeitung der Daten durch Filtern, Normalisierungen und Transformationen
+- zum Schluss wird das Modell gebaut, der Trainings-Loop durchlaufen und die Testergebnisse ausgewertet und geplottet
+
+Diesem roten Faden folgt auch der Aufbau dieser Dokumentation. Im Folgenden noch ein paar kurze Beschreibungen zu den weiteren Dokumenten:
 
 #### **config**
 - enthält globale Variablen wie file path und trainings-parameter
@@ -687,6 +704,258 @@ Der MSE ist mit ungefähr 40 auf dem Test-Datensatz in Angesicht der eigenen Imp
 
 Anhand des Plots ist zu erkennen, dass dieser MSE von 40 hauptsächlich durch eine Ungenauigkeit in den ersten Cycles entsteht. Relevanter ist die RUL jedoch Richtung Ende der Lebensdauer. Hier ist eine deutliche Annäherung an die True-RUL erkennbar, weshalb festzuhalten ist, dass solch ein CNN ausreichend gut ist, um RUL Vorhersagen treffen zu können. 
 
+## Bidirectional LSTM
+
+### Allgemeine Informationen
+Ein Bi-LSTM(Bidirectional Long Short-Term Memory) kann die Eingabedaten nicht nur durch einen Forward-Pass vorwärts, sondern auch rückwärts durch den sogenannten Backward-Pass verarbeiten. Wenn wir die Sensordaten über die Zeit beobachten, dann geht der Forward-Pass von dem ersten Zeitpunkt zum letzten Zeitpunkt und der Backward-Pass genau anders herum. Ein LSTM is eine Art eines RNNs. Sie generalisieren meist besser als "Standard"-LSTMs, benötigen aber große Datensätze, was wir hier haben.
+
+### Loader
+Es wurden für dieses Modell zwei Loader-Klassen erstellt. Diese sind fast gleich, sie unterscheiden sich lediglich im Slicing der Tables aus unserem Datensatz und in der Sammlung der Unit-IDs beim Trainingsdatensatz. Da wir Daten und die zugehörige Unit-ID eines jeden Datenpunkts für die Evaluierung des Modells im Nachhinein benötigen, gibt es diesen kleinen Unterschied.
+Das Sliding Window Verfahren ermöglicht dem Model auf Daten über einen längeren Zeitraum zu trainieren.
+```python
+train_dataset = CMAPSSDataset('N-CMAPSS_DS01-005.h5',window_size=50)
+validation_dataset = CMAPSSValSet('N-CMAPSS_DS01-005.h5',window_size=50)
+```
+
+#### Cliping
+Die Y- Wert werden bei 125 gecliped mit
+```python 
+self.Y = np.clip(self.Y, 0, 125)
+```
+Dies Cliping dient dazu, dass wir das Modell dazu zwingen, beim Generalisieren sich auf die kleineren Y-Werte zu fokussieren. Hierbei soll das Modell uns lieber genauere Prognosen geben, wenn ein Triebwerk wenig Zyklen übrig hat. Ohne das Cliping könnte es sein, dass zu viel Rechenzeit dafür "verschwendet" wird, dass das Modell bei Triebwerken mit geringer Lebensdauer versucht zu generalisieren. Bei dem Wert 125 handelt es sich um einen Erfahrungwert.
+
+### Modell Klasse
+#### Erstes Layer
+```python
+self.lstm = nn.LSTM(
+            input_dim, 
+            hidden_dim, 
+            num_layers, 
+            batch_first=True,
+            bidirectional=True
+        )
+```
+Das Eingabelayer ist eine LSTM-Layer, bei dem der Eingabeparameter bidirectional aktiviert ist. Dieser Layer ist der Filter des neuronalen Netzes.
+
+#### Dropout Layer
+Das Dropout Layer schützt vor Overfitting. Die Wahrscheinlichkeit, dass ein Neuron zurückgesetzt wird, wird mit `dropout_prob` eingestellt werden. Hier wurde mit einer Dropout-Wahrscheinlichkeit von 0.4 trainiert.
+```python
+self.lstm_dropout = nn.Dropout(dropout_prob)
+```
+
+#### Attention Net
+Implementiert wurde ein Aufmerksamkeitsmechanismus von Badhanau, der auch Additive Attention genannt wird. Das Attention Net gewichtet wichtige Zeitsequenzen höher. `self.attn_query` ist ein lernbarer Vektor. Als Erstes findet eine Matrixmultiplikation statt und werden die Outputs des ersten Layers mit den bisherigen Gewichten unseres Attention-Vektors multipliziert.
+```python
+torch.matmul(lstm_output, self.attn_query)
+```
+Der Tangens Hyperbolicus `tanh` ordnet dann jedem Zeitschritt einen Wert zwischen 1 und -1 zu.
+```python
+attn_weights = torch.tanh(torch.matmul(lstm_output, self.attn_query)) 
+```
+$$
+\tanh(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}
+$$
+Die Softmax-Funktion wandelt diese Werte dann in Wahrscheinlichkeiten um. Dies gibt dann die Wahrscheinlichkeiten für die Relevanz eines jeden Zeitpunkts.
+```python
+attn_weights = torch.softmax(attn_weights, dim=1)
+```
+$$
+\sigma(\mathbf{z})_i = \frac{e^{z_i}}{\sum_{j=1}^{K} e^{z_j}}
+$$
+
+Diese Gewichte multiplizieren wir mit dem Output, sodass wir einen Vektor zurückbekommen.
+```python
+context = torch.sum(attn_weights * lstm_output, dim=1)
+```
+$$
+\mathbf{c} = \sum_{i=1}^{T} \alpha_i \mathbf{h}_i
+$$
+Die Gewichte des Attentionvektors müssen wir nicht selbst neu initialisieren, dies erledigt PyTorch für uns im Hintergrund.
+
+#### FC - Layer
+Ein FC - Layer (Fully Connected Layer) ist ein dichtes Layer. Hierbei ist jedes Neuron in seinem Layer mit jedem Neuron aus dem vorherigen und folgenden Layer verbunden. Hier wurde auch ein `Dropout` Layer eingebaut, um Overfitting zu verhindern. 
+
+```python
+self.fc_layers = nn.Sequential(
+            nn.Linear(hidden_dim * 2, hidden_dim * 2),
+            nn.BatchNorm1d(hidden_dim * 2),
+            nn.LeakyReLU(0.1),
+            nn.Dropout(dropout_prob),
+            
+            nn.Linear(hidden_dim * 2, hidden_dim // 2),
+            nn.LeakyReLU(0.1),
+            
+            nn.Linear(hidden_dim // 2, output_dim)             
+        )
+```
+`nn.BatchNorm1d` normalisiert die Outputs des vorangegangen Layers. Diese Normalisierung beschleunigt die Rechenzeit des neuronalen Netzes. Die Normalisierung läuft in 4 Schritten ab. Beim ersten Schritt wird der Mittelwert berechnet.
+$$
+\mu_{B}^{(k)} \leftarrow \frac{1}{m} \sum_{i=1}^{m} x_{B_i}^{(k)}
+$$
+Im nächsten Schritt wird die Varianz des Batches berechnet
+$$
+\sigma_{B}^{2(k)} \leftarrow \frac{1}{m} \sum_{i=1}^{m} (x_{B_i}^{(k)} - \mu_{B}^{(k)})^2
+$$
+Dann wird der Wert normalisiert:
+$$
+\hat{x}_{B}^{(k)} \leftarrow \frac{x_{B}^{(k)} - \mu_{B}^{(k)}}{\sqrt{\sigma_{B}^{2(k)} + \epsilon}}
+$$
+Bei `γ` und `β` handelt es sich um zwei lernbare Parameter, die dem Modell ermöglichen, die Normalisierung wieder aufzulösen.
+$$
+y_i \leftarrow \gamma \hat{x}_{B}^{(k)} + \beta
+$$
+
+#### Feed Forward
+Die Standard Feedforward Funktion von PyTorch wurde überschrieben. Als erstes werden die Outputs aus dem LSTM Filter an das Attention Net weitergegeben. Von dem Attention Net erhalten wir einen sogenannten Kontextvektor zurück. Dieser Kontextvektor geht dann durch die `FC-Layer`.
+```python
+def forward(self, x):
+
+    # filter layer
+    lstm_out, _ = self.lstm(x) 
+
+    # attention net
+    context = self.attention_net(lstm_out)
+
+    # dense layer
+    out = self.fc_layers(context) 
+            
+    return out
+```
+
+#### Backward Pass
+Hier wurde die Methode von PyTorch genutzt.
+
+### Early Stopping
+Die Early Stopping Klasse greif bei Overfitting in der Trainingsschleife ein. Sollte sich die Validation Losses innerhalb einer `self.patience` Dauer nicht verbessern, so sorgt die Klasse für den Abbruch. Bei einer Verschlechterung des Validation Losses im Vergleich zum besten Loss, wird ein `self.counter` erhöht. Wenn der `self.counter` gleich der `self.patience` sein, wird
+```python
+self.early_stop = True
+```
+gesetzt. Dieser Boolean wird in jeder Iteration der Trainingsschleife abgefragt und je nach dem kommt es zu einem break:
+```python
+early_stopper(avg_val_loss)
+if early_stopper.early_stop:
+    print("Stopping the training!")
+    break
+```
+
+### Model Initialization
+#### Settings
+|Parameter|Wert|
+|---|---|
+|`Epochen`| 20|
+|`Anzahl Neuronen` (hidden_dim)|32|
+|`LSTM-Schichten` (num_layers)|1|
+|`Dropout Wahrscheinlichkeit`| 40%|
+|`batch size`|64|
+|`Learning Rate`|1e-5|
+|`Weight_Decay/L2-Regularisierung`|1e-2|
+
+#### Scheduler
+```python
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=1, factor=0.5)
+```
+Der `Scheduler` multipliziert die Lernrate des `Optimizers` mit dem `factor`, wenn keine Verbesserung des Neuronalen Netzes mehr nach der Zeit `patience` stattfindet. Mit einer Reduzierung der Schrittweite `lr` (Learning Rate), kann dann genauer nach einem Minimum gesucht werden.
+$$\text{lr}_{\text{new}} = \text{lr}_{\text{old}} \cdot \text{factor}$$
+
+### Probleme
+Im Zuge dieses Projekts kam es im Bezug auf das bidirektionale LSTM zu einem großen Problem: `Overfitting`. Dafür wurden immer wieder Feinjustierungen vorgenommen, um ein bestmögliches Ergebnis zu erreichen. Zudem wurde als erstes ein Standard LSTM implementiert, welches aber vergleichsweise zu dem jetzigen bidirektionalen LSTM ziemlich ungenau war.
+
+### Ergebnis
+Zu Beginn wurde erst ein normales LSTM - Modell entwickelt. Dort war der minimale `Validation Loss` 100. Mit dem Hinzufügen des `Attention Nets`, sowie des `LR Schedulers` wurden dann ein minimaler `Validation Loss` von 10 erreicht. Man sieht bei höheren RUL's wird das neuronale Netz deutlich ungenauer. Dies kann dem `Clipping` zugeordnet werden. Umso beeindruckender ist, dass bei niedrigen RUL-Werten die Prediction-RUL fast identisch zu den Original Werten ist. Das ist natürlich ein Erfolg, da dort eine genaue Prognose gewünschter ist, als bei hohen RUL-Werten. Demnach kann man sagen, dass das Clipping durchaus erfolgreich war und seinen Zweck erfüllt hat.
+
+Beim Verlauf des `Trainings-` und des `Validation Losses` sieht man nunmehr keine Zeichen des Overfittings. Beide werden fast kontinuierlich verringert bis auf kleinere Ausreißer. Nach anfänglichen Startschwierigkeiten, verbessert sich das Modell mit jeder Epoche.
+
+## Installation
+
+### Voraussetzungen
+
+- Python 3.8 oder höher
+- pip
+- Git
+
+---
+
+### 1. Repository klonen
+
+```bash
+git clone https://github.com/BitingRabbit/RUL-Prediction-using-CNN-and-LSTM.git
+cd RUL-Prediction-using-CNN-and-LSTM
+```
+
+---
+
+### 2. Datensatz herunterladen
+
+Den Datensatz `N-CMAPSS_DS01-005.h5` von Kaggle herunterladen:
+https://www.kaggle.com/datasets/bishals098/nasa-cmapss-2-engine-degradation?resource=download
+
+Die heruntergeladene Datei in den `datasets/`-Ordner des Projekts verschieben:
+
+```
+RUL-Prediction-using-CNN-and-LSTM/
+└── datasets/
+    └── N-CMAPSS_DS01-005.h5
+```
+
+---
+
+### 3. Virtual Environment erstellen und aktivieren
+
+**Windows:**
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+**macOS / Linux:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+---
+
+### 4. Dependencies installieren
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 5. Konfiguration (`config.py`)
+
+Zentrale Parameter wie Pfade, Epochen und Hyperparameter werden in `config.py` im Root-Verzeichnis verwaltet:
+
+```python
+FILENAME: str = "datasets/N-CMAPSS_DS01-005.h5"
+CHECKPOINT_PATH: str = "trained_models/network_checkpoint4.1.pth"
+EPOCHS: int = 20
+LEARNING_RATE: float = 1e-5
+BATCH_SIZE: int = 64
+WIN_LEN: int = 10
+LOAD_MODEL: bool = False
+```
+
+> **Hinweis:** Das Training des CNN auf dem vollständigen Datensatz dauert sehr lange. Es wird daher empfohlen, ein vortrainiertes Modell zu laden. Dazu in `config.py` folgendes setzen:
+> ```python
+> LOAD_MODEL: bool = True
+> ```
+> Die vortrainierten Modelle sind im `models/`-Ordner des Repositories bereits enthalten.
+
+---
+
+### 6. Jupyter Notebooks ausführen
+
+Das Virtual Environment muss als Kernel in Jupyter registriert sein. Falls noch nicht geschehen:
+
+```bash
+pip install ipykernel
+python -m ipykernel install --user --name=venv --display-name "Python (venv)"
+```
+
+Anschließend Jupyter öffnen und im Notebook oben rechts unter **Kernel → Change Kernel** den Eintrag **Python (venv)** auswählen. Die Cells können dann der Reihe nach von oben nach unten ausgeführt werden.
+
 ## Quellen und Hilfsmittel
 
 ### Quellen:
@@ -743,6 +1012,19 @@ https://docs.pytorch.org/docs/stable/index.html
 
 PyTorch nn.Sequential:
 https://medium.com/we-talk-data/pytorchs-sequential-3974f27c714e
+
+Bi-LSTM:
+https://www.geeksforgeeks.org/nlp/bidirectional-lstm-in-nlp/
+
+Attention-Net:
+https://medium.com/@yashwanths_29644/deep-learning-series-15-understanding-bahdanau-attention-and-luong-attention-773216197d1f
+https://www.ibm.com/de-de/think/topics/attention-mechanism
+
+FC-Layer:
+https://www.geeksforgeeks.org/deep-learning/what-is-fully-connected-layer-in-deep-learning/
+
+Batch Normalization:
+https://medium.com/thedeephub/batch-normalization-for-training-neural-networks-328112bda3ae
 
 
 ### Hilfsmittel:
