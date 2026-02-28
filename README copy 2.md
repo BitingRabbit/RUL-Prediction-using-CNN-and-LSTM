@@ -8,10 +8,11 @@ Authors: *Christoph Gahabka, Levin Singler, Jonathan Remus*
 
 ### Inhaltsverzeichnis
 
-- [Zielsetzung](#Zielsetzung)
-- [Projektstruktur](#Projektstruktur)
+- [Thema-Einleitung](#Thema-Einleitung)
+- [Zielsetzung-Idee](#Zielsetzung-Idee)
+- [Projektstruktu](#Projektstruktur)
+- [Dataset-Overview-Umweltwissen](#Dataset-Overview-Umweltwissen)
 - [Modul-Beschreinung](#modul-beschreibung)
-- [Dataset-Overview](#Dataset-Overview)
 - [Konfiguration](#Konfiguration)
 - [CNN-Model](#CNN-Model)
     - [Architektur](#Architektur)
@@ -39,7 +40,6 @@ Grundsätzlich lassen sich zwei Ansätze zur RUL-Schätzung unterscheiden: **mod
 
 Im Rahmen dieses Programmentwurfs werden beide Architekturen auf dem N-CMAPSS-Datensatz implementiert, trainiert und miteinander verglichen, um eine Lösung für das RUL-Problem zu entwickeln.  Damit wird der Kerngedanke eines datenbasiereten, intelligenten Systems zur vorausschauenden Wartung anschaulich veranschaulicht.
 
-
 ## Projektstruktur
 Das Projekt ist bewusst modular aufgebaut, um eine klare Trennung zwischen Datenverarbeitung, Modelllogik und Analyse zu gewährleisten. Der gesamte wiederverwendbare Code ist in einem eigenen src/-Paket gebündelt, sodass die einzelnen Notebooks lediglich die Hauptfunktionen und Code-Blöcke enthalten. 
 
@@ -65,6 +65,9 @@ projekt/
 
 **models/**
 - enthält die **trainierten Modelle** im .pth-Format, je nach unterschiedlichen Parametern
+
+## Dataset-Overview
+
 
 ## Modul-Beschreibung
 ```md
@@ -157,10 +160,10 @@ $$
 - **Output**: skalarer Tensor (Durchschnittlicher quadratischer Fehler)
 
 
-## Dataset-Overview
 
+## Konfiguration
 
-## Konfiguration (`config.py`)
+(config.py)
 
 Alle zentralen Parameter des Projekts sind in der `config.py` gebündelt, sodass Anpassungen an genau einer Stelle vorgenommen werden können, ohne in den einzelnen Notebooks suchen zu müssen:
 
@@ -752,5 +755,6 @@ KI (ChatGPT und Claude) für folgende Aktionen:
 - teilweise für das Umschreiben von eigenen Kommentaren / Dokumentationsabschnitten für eine gewähltere Ausdrucksweise
 - Konvertierung von mathematischen Formeln in Markdown
 - Rückfragen bei Errors im Code
-- Rückfragen / Auswertung der Code-Qualität 
+- Rückfragen / Auswertung der Code-Qualität
+- für den plot_agent() und wigets in der interaktiven Demo
 - vor allem aber zum Lernen und Verstehen von Konzepten und Beantworten von Verständnisfragen bzgl. komplizierter mathematischer Konzepte
