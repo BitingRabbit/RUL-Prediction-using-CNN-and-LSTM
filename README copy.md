@@ -472,6 +472,12 @@ $$\mathbb{R}^{C_{out} \times L} \cdot \mathbb{R}^{L \times (C_{in} \cdot K_h \cd
 Da über den Batch iteriert wird, werden die Gradienten über alle Samples summiert und das Ergebnis anschließend zurück in die ursprüngliche Kernelform 
 $\mathbb{R}^{C_{out} \times C_{in} \times K_h \times K_w}$ umgeformt.
 
+```python
+for b in range(B):
+    grad_weight += (
+        grad_output_flat[b] @ x_col[b].T
+    ).view_as(weight)
+```
 <br>
 
 ###### **Gradient bezüglich des Bias**
@@ -499,7 +505,9 @@ $$\frac{\partial E}{\partial \mathbf{b}} = \sum_{b=1}^{B} \sum_{l=1}^{L} \frac{\
 
 Es verbleibt ausschließlich `dim=1` = $C_{out}$ (Ausgangskanäle), womit der Gradient die Form $\frac{\partial E}{\partial \mathbf{b}} \in \mathbb{R}^{C_{out}}$ annimmt.
 
-<br>
+```python
+grad_bias: Tensor = grad_output.sum(dim=(0, 2, 3))
+```
 
 ###### **Gradient bezüglich der Input-Matrix X**
 
