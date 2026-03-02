@@ -56,8 +56,6 @@ projekt/
 │   └── cnn.py                 <- Model loading, Evaluation
 ├── cnn_model.ipynb            <- CNN Training & Demo
 ├── lstm_model.ipynb           <- LSTM Training & Demo
-├── data_analysis.ipynb        <- EDA, Visualisations
-└── overview.ipynb             <- Overview of findings
 ```
 
 Den Kern bilden die Jupiter Notebooks:
