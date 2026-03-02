@@ -20,7 +20,7 @@ Authors: *Christoph Gahabka, Levin Singler, Jonathan Remus*
     - [Training](#Training)
     - [Ergebnisse/Plotting](#Ergebnisse)
 - [LSTM-Model](#LSTM-Model)
-- [Vergleich CNN vs. LSTM](#vergleich-cnn-lstm)
+- [Vergleich CNN vs. bi-LSTM](#vergleich-cnn-lstm)
 - [Installationsanleitungen](#Installationsanleitungen)
 - [Quellen/Hilfsmittel](#Quellen-und-Hilfsmittel)
 
@@ -847,6 +847,11 @@ Im Zuge dieses Projekts kam es im Bezug auf das bidirektionale LSTM zu einem gro
 Zu Beginn wurde erst ein normales LSTM - Modell entwickelt. Dort war der minimale `Validation Loss` 100. Mit dem Hinzufügen des `Attention Nets`, sowie des `LR Schedulers` wurden dann ein minimaler `Validation Loss` von 10 erreicht. Man sieht bei höheren RUL's wird das neuronale Netz deutlich ungenauer. Dies kann dem `Clipping` zugeordnet werden. Umso beeindruckender ist, dass bei niedrigen RUL-Werten die Prediction-RUL fast identisch zu den Original Werten ist. Das ist natürlich ein Erfolg, da dort eine genaue Prognose gewünschter ist, als bei hohen RUL-Werten. Demnach kann man sagen, dass das Clipping durchaus erfolgreich war und seinen Zweck erfüllt hat.
 
 Beim Verlauf des `Trainings-` und des `Validation Losses` sieht man nunmehr keine Zeichen des Overfittings. Beide werden fast kontinuierlich verringert bis auf kleinere Ausreißer. Nach anfänglichen Startschwierigkeiten, verbessert sich das Modell mit jeder Epoche.
+
+![lstm_unit_seven](/images/lstm_unit_seven.png)
+
+## Vergleich CNN vs. bi-LSTM
+Im Allgemeinen kann man sagen, dass beide neuronalen Netze sehr gut gelungen sind. Vergleicht man die reinen Daten, so liegt das bidirektionale LSTM ein kleines Stück vor dem CNN. Mit einem `Validation Loss` von ca. **40** bei dem CNN und ca. **26** bei dem bi - LSTM, bzw. einem R2 - Score beim Validation Dataset von ca. **0.92** bei dem CNN und ca. **0.96** bei dem bidirektionalen LSTM sind die Unterschiede relativ klein. Dennoch scheint es, als sei ein bidirektionales LSTM für diesen Datensatz das geeignetere Modell. Vergleicht man beide Graphen mit den Vorhersagen für den Sensor mit der `Unit ID 7`, so erkennt man auch hier nur einen minimalen Unterschied bei der Varianz um die Gerade der Realdaten. Ein bidirektionales LSTM ist genau für solche Zeitreihenanalysen gemacht, was diesen kleinen, aber feinen Unterschied erklärt. Auf der anderen Seite, neigt das bidirektionale LSTM zu Overfitting, weshalb ein `Attention Net` oder der `Early Stop` eingebaut wurden. Im Regelfall ist die Dauer für das Training eines CNN geringer als für ein bi-LSTM. Zusammenfassend kann man sagen, dass das bidirektionale LSTM genauer ist als das CNN, dafür aber Probleme beim Overfitting und Zeitintensität mit sich zieht.
 
 ## Installationsanleitungen
 ### Link
