@@ -2,16 +2,14 @@
 
 Authors: *Christoph Gahabka, Levin Singler, Jonathan Remus*
 
-**Datum**: 2026-02-23
-
-*Diese Dokumentation ist ebenfalls als PDF im root unter der Datei ```Dokumentation.pdf``` vorzufinden*
+**Datum**: 2026-03-02
 
 ### Inhaltsverzeichnis
 
 - [Themen Einleitung](#Themen-Einleitung)
 - [Zielsetzung und Idee](#Zielsetzung-und-Idee)
 - [Projektstruktur](#Projektstruktur)
-- [Dataset-Overview-Umweltwissen](#Dataset-Overview-Umweltwissen)
+- [Dataset-Overview und Umweltwissen](#Dataset-Overview-und-Umweltwissen)
 - [Modul-Beschreinung](#modul-beschreibung)
 - [Konfiguration](#Konfiguration)
 - [CNN-Model](#CNN-Model)
@@ -19,9 +17,9 @@ Authors: *Christoph Gahabka, Levin Singler, Jonathan Remus*
     - [Custom-Layer-Implementierung](#Custom-Layer-Implementierung)
     - [Training](#Training)
     - [Ergebnisse/Plotting](#Ergebnisse)
-- [LSTM-Model](#LSTM-Model)
+- [Bidirectional LSTM](#Bidirectional-LSTM)
 - [Vergleich CNN vs. LSTM](#vergleich-cnn-lstm)
-- [Installationsanleitungen](#Installationsanleitungen)
+- [Installationsanleitungen](#Installationsanleitung)
 - [Quellen/Hilfsmittel](#Quellen-und-Hilfsmittel)
 
 ## Themen Einleitung
@@ -32,7 +30,7 @@ Ein Schlüsselkonzept der Predictive Maintenance ist die Vorhersage der verbleib
 
 ## Zielsetzung und Motivation
 
-### Zielsetzung
+### Zielsetzung und Idee
 
 Da wir alle drei als Duale Studenten von Airbus in dem Sektor der Luftfahrt tätig sind, welcher von einer hohen Sicherheitskultur lebt, haben wir uns entschieden, dieses Problem anzugehen.
 
@@ -83,8 +81,59 @@ Diesem roten Faden folgt auch der Aufbau dieser Dokumentation. Im Folgenden noch
 **models/**
 - enthält die **trainierten Modelle** im .pth-Format, je nach unterschiedlichen Parametern
 
-## Dataset-Overview
+## Dataset-Overview und Umweltwissen
 
+Der Datensatz beschreibt eine kleine Flotte von Turbofan-Triebwerken, die unter realistischen Flugbedingungen bis zum Ausfall simuliert wurden. Die Simulation basiert auf dem C-MAPSS-Modell, einem hochauflösenden thermodynamischen Modell eines großen kommerziellen Zweistrom-Turbofantriebwerks. Ziel des Datensatzes ist es, vollständige Run-to-Failure-Zeitreihen bereitzustellen, um datengetriebene Prognoseverfahren zur Vorhersage der Restlebensdauer (Remaining Useful Life, RUL) zu entwickeln und zu evaluieren. Die Besonderheit dieses Datensatzes besteht darin, dass reale Flugprofile – also Steigflug, Reiseflug und Sinkflug – als Eingangsszenarien verwendet wurden. Dadurch sind die Betriebsbedingungen nicht konstant, sondern variieren kontinuierlich hinsichtlich Flughöhe, Machzahl und Schubanforderung. Diese realitätsnahe Variation erhöht die Komplexität der Sensordaten erheblich und stellt höhere Anforderungen an Prognosemodelle.
+
+Das zugrunde liegende Triebwerk folgt dem klassischen Aufbau eines zweistrahligen Turbofantriebwerks mit zwei Wellen einer Niederdruckwelle (Fan und LPC) und einer Hochdruckwelle (HPC). Der Luftstrom tritt vorne in das Triebwerk ein, wird durch mehrere Verdichterstufen komprimiert, in der Brennkammer mit Kraftstoff vermischt und verbrannt und treibt anschließend über Hoch- und Niederdruckturbinen die Verdichter an, bevor er als Abgas austritt und Schub erzeugt.
+
+![engine](./images/engine.png)
+
+Am Eintritt des Triebwerks befinden sich die Referenzsensoren für die Umgebungsbedingungen. Die Gesamttemperatur am Fan-Einlass (T2) beschreibt die thermische Energie der einströmenden Luft einschließlich ihres Bewegungsanteils. Diese Größe ist nicht nur von der Außentemperatur abhängig, sondern auch von der Fluggeschwindigkeit. Thermodynamisch ist T2 entscheidend, da sämtliche Temperaturerhöhungen im Verdichter relativ zu diesem Wert bestimmt werden. Parallel dazu misst der Gesamtdruck am Einlass (P2) die Druckenergie der einströmenden Luft. Viele Leistungskennzahlen, insbesondere das Engine Pressure Ratio (EPR), beziehen sich auf diesen Wert als Referenz. Ohne die Kenntnis dieser Einlassbedingungen könnten Druck- und Temperaturverhältnisse im Triebwerk nicht korrekt interpretiert werden.
+Unmittelbar hinter dem Einlass arbeitet der Fan. Er beschleunigt einen Großteil der Luft durch den Bypass-Kanal und erzeugt damit den überwiegenden Anteil des Schubs. Die Fan-Drehzahl (Nf) gibt an, wie schnell die Niederdruckwelle rotiert. Mechanisch ist diese Größe relevant, da sie die Leistungsübertragung von der Niederdruckturbine zum Fan beschreibt. Änderungen der Drehzahl können auf Regelungsreaktionen bei Effizienzverlusten hinweisen.
+
+Im Bereich des Niederdruckverdichters (LPC) wird die Luft weiter komprimiert. Die Temperatur am LPC-Austritt (T24) misst die durch Verdichtungsarbeit verursachte Erwärmung der Luft. Gleichzeitig beschreibt der Gesamtdruck am LPC-Austritt (P24) den erreichten Druckanstieg. Das Verhältnis von P24 zu P2 ist ein Maß für die Verdichtungsleistung dieser Stufe. Zusätzlich existiert der Druck im Bypasskanal (P15), der insbesondere für die Nebenstromcharakteristik des Triebwerks relevant ist. Obwohl der LPC im Datensatz nicht primär von der modellierten Degradation betroffen ist, liefern diese Sensoren wichtige Kontextinformationen über den vorderen Verdichterzustand.
+Die nächste und entscheidende Verdichtungsstufe ist der Hochdruckverdichter (HPC). Hier wird die Luft stark komprimiert, bevor sie in die Brennkammer gelangt. Die Temperatur am HPC-Austritt (T30) ist einer der wichtigsten Indikatoren für Verdichterdegradation. Sinkt die Effizienz des HPC, wird ein größerer Anteil der mechanischen Arbeit in Wärme umgewandelt, was zu steigenden Austrittstemperaturen führt. Der Gesamtdruck am HPC-Austritt (P30) beschreibt den erzielten Druckaufbau. Ein Effizienzverlust kann dazu führen, dass bei gleicher Drehzahl weniger Druck aufgebaut wird. Ergänzend misst Ps30 den statischen Druck an dieser Station, der für Verbrennungsberechnungen relevant ist. Die Kerndrehzahl (Nc) beschreibt die Rotationsgeschwindigkeit der Hochdruckwelle und gibt Aufschluss darüber, wie das System mechanisch arbeitet und auf Leistungsverluste reagiert.
+
+In der Brennkammer wird Kraftstoff eingespritzt und mit der komprimierten Luft verbrannt. Der Kraftstoffdurchfluss (Wf) bestimmt die zugeführte chemische Energie pro Zeiteinheit. Er beeinflusst direkt die Temperatur am Brennkammerausgang (T40), die die maximale thermische Belastung des Systems widerspiegelt. Ein Anstieg von T40 kann auf ineffiziente Verdichtung oder Turbinenprobleme hindeuten. Der Gesamtdruck am Brennkammerausgang (P40) gibt Aufschluss über Druckverluste während der Verbrennung. In Kombination mit T40 lässt sich der energetische Zustand des Heißgasstroms charakterisieren.
+Nach der Brennkammer strömt das heiße Gas durch die Hochdruckturbine (HPT). Diese Turbinenstufe entzieht dem Gasstrom Energie, um den Hochdruckverdichter anzutreiben. Die Temperatur am HPT-Austritt (T48) beschreibt, wie viel thermische Energie nach der Energieentnahme verbleibt. Da laut Datensatz insbesondere eine Hochdruckturbinen-Degradation modelliert wurde, reagieren T48 und der zugehörige Drucksensor P45 besonders empfindlich auf Verschleiß. Ein Wirkungsgradverlust der HPT verändert das Temperatur- und Druckprofil deutlich.
+
+Anschließend folgt die Niederdruckturbine (LPT), die die Niederdruckwelle und damit den Fan antreibt. Die Temperatur am LPT-Austritt (T50) zeigt, wie viel Energie nach der letzten Turbinenstufe verbleibt. Der Gesamtdruck am LPT-Austritt (P50) wird zur Berechnung globaler Leistungskennzahlen verwendet. Veränderungen dieser Werte sind typische Indikatoren für kombinierte HPT- und LPT-Degradation, wie sie in einem Teil der simulierten Einheiten vorkommt. Zusätzlich werden Massenströme wie W48 und W50 erfasst. Diese beschreiben die Gasmenge, die die jeweiligen Turbinenstufen durchströmt. Veränderungen können auf Strömungsverluste oder Effizienzänderungen hindeuten. Eine zentrale zusammenfassende Leistungskennzahl ist das Engine Pressure Ratio (EPR), definiert als Verhältnis von P50 zu P2. Diese Größe beschreibt das gesamte Druckverhältnis vom Einlass bis zum Abgas. Sinkt das EPR unter vergleichbaren Betriebsbedingungen, deutet dies auf einen allgemeinen Effizienzverlust im System hin.
+
+Der Datensatz enthält zwei Fehlermodi reine Hochdruckturbinen-Degradation sowie kombinierte Hoch- und Niederdruckturbinen-Degradation. Die Degradation beginnt mit einer moderaten, nahezu linearen Phase und geht später in eine steilere Phase über. Dieser Übergang ist von Einheit zu Einheit unterschiedlich und hängt von der Betriebshistorie ab. In den Sensordaten manifestiert sich dieser Prozess durch allmähliche Trends in Temperatur- und Druckwerten sowie durch Anpassungen der Drehzahlen und des KraftstoffdurchfluIm Rahmen der explorativen Datenanalyse wurden die zur Verfügung gestellten Zeitreihen-, Trend- und Korrelationsgraphiken detailliert untersucht, um jene Sensordaten zu identifizieren, die sich in besonderem Maße für die Vorhersage der Restlebensdauer (Remaining Useful Life, RUL) eignen. Ziel dieser Untersuchung war es, eine fundierte und physikalisch begründete Auswahl geeigneter Eingangsgrößen für das Prognosemodell zu treffen und gleichzeitig redundante oder wenig informative Variablen zu erkennen.
+
+![hpt_eff](./images/hpt_eff.png)
+
+Die Analyse der Zeitverlaufsdiagramme über die vollständigen Run-to-Failure-Zyklen zeigt zunächst, dass sich die Sensoren deutlich in ihrem Informationsgehalt unterscheiden. Ein Teil der Sensoren weist über die gesamte Lebensdauer hinweg nahezu konstante Verläufe auf oder zeigt ausschließlich kurzfristige Schwankungen, die primär durch wechselnde Betriebsbedingungen wie Flughöhe, Machzahl oder Schubanforderung verursacht werden. Diese Sensoren reagieren zwar sensibel auf Flugphasen, jedoch nicht systematisch auf die fortschreitende Degradation der Triebwerkskomponenten. Für die RUL-Vorhersage sind solche Signale nur bedingt geeignet, da sie keinen klaren, monotonen Zusammenhang mit der verbleibenden Lebensdauer aufweisen.
+
+![mod_plots](./images/mod_plots.png)
+
+Turbinenbereich einen deutlich erkennbaren, über die Zyklen hinweg konsistenten Trend. In den entsprechenden Graphiken ist bei diesen Sensoren ein sukzessiver Anstieg oder Abfall der Messwerte zu beobachten, wobei sich die Änderungsrate gegen Ende der Lebensdauer häufig erhöht. Dieses Verhalten entspricht dem im Datensatz beschriebenen zweiphasigen Degradationsmodell, bei dem auf eine moderate, nahezu lineare Verschlechterung eine steilere, beschleunigte Phase folgt . Sensoren mit einer solchen charakteristischen Entwicklung besitzen eine hohe prognostische Relevanz, da sie dem Modell eine eindeutige und lernbare Struktur zwischen Sensormuster und verbleibender Lebensdauer liefern.
+
+Besonders hervorzuheben ist die Temperatur am Austritt des Hochdruckverdichters (T30). In den Zeitreihendiagrammen zeigt sich hier ein klarer, nahezu monotoner Anstieg mit zunehmender Zykluszahl. Die Streuung innerhalb vergleichbarer Betriebszustände bleibt dabei relativ gering, sodass der zugrunde liegende Trend deutlich erkennbar bleibt. Physikalisch lässt sich dieses Verhalten durch einen Wirkungsgradverlust des Hochdruckverdichters erklären. Sinkt dessen Effizienz, wird mehr mechanische Arbeit benötigt, um den erforderlichen Druckaufbau zu erreichen, was zu einer höheren Temperatur am Austritt führt. Die Kombination aus klarer Trendstruktur, physikalischer Plausibilität und geringer Störanfälligkeit macht T30 zu einem der zentralen Prädiktoren für die RUL.
+
+![T_30](./images/T_30.png)
+
+Eine ähnliche Aussage lässt sich für die Temperatur am Brennkammerausgang (T40) treffen. Die Graphiken zeigen hier eine signifikante Drift über die Lebensdauer hinweg, wobei insbesondere in der Spätphase ein beschleunigter Anstieg erkennbar ist. Da die Brennkammer direkt auf Veränderungen im Verdichtungsgrad und im Turbinenwirkungsgrad reagiert, fungiert T40 als integraler Indikator für den thermischen Gesamtzustand des Systems. Ein erhöhter Kraftstoffbedarf zur Aufrechterhaltung der Leistung schlägt sich unmittelbar in steigenden Brennkammer- und Turbinentemperaturen nieder. In den Korrelationsdarstellungen weist T40 dementsprechend eine deutliche Beziehung zur Zielgröße auf.
+
+![T_40](./images/T_40.png)
+
+Im Bereich der Hochdruckturbine ist insbesondere die Temperatur am Turbinenaustritt (T48) hervorzuheben. Die Zeitreihen zeigen hier eine klar strukturierte Veränderung im Verlauf der Degradation. Da im Datensatz unter anderem eine Hochdruckturbinen-Degradation modelliert wurde , ist es konsistent, dass gerade dieser Sensor stark auf den Verschleiß reagiert. Die Veränderung von T48 reflektiert direkt die reduzierte Energieentnahmefähigkeit der Turbine sowie die damit verbundene Verschiebung des thermodynamischen Gleichgewichts.Auch die Temperatur am Austritt der Niederdruckturbine (T50) zeigt insbesondere bei kombinierten Fehlermodi eine deutliche systematische Veränderung bis zum End-of-Life-Zeitpunkt.
+
+![T_50](./images/T_50)
+![T_48](./images/T_48)
+
+Neben den Temperaturwerten liefern auch Drucksensoren im Hochdruck- und Brennkammerbereich wertvolle Information. Die Gesamtdrücke P30 und P40 weisen in den Korrelationsgraphiken eine signifikante Beziehung zur
+
+ Restlebensdauer auf. Während Temperaturwerte häufig einen ansteigenden Trend zeigen, können Druckwerte bei Effizienzverlusten abnehmen oder veränderte Druckverhältnisse aufweisen. Da Druck- und Temperaturverhältnisse gemeinsam den thermodynamischen Zustand bestimmen, liefern sie komplementäre Informationen. In multivariaten Modellen kann diese Kombination die Vorhersagegenauigkeit erhöhen, da sowohl energetische als auch strömungsmechanische Effekte berücksichtigt werden.
+
+Ein weiterer relevanter Sensor ist die Kerndrehzahl (Nc). In den Zeitreihen ist hier kein so stark ausgeprägter monotone Trend erkennbar wie bei thermischen Größen, jedoch zeigen sich konsistente Anpassungen im Verlauf der Lebensdauer. Diese Anpassungen resultieren aus Regelmechanismen, die versuchen, Effizienzverluste zu kompensieren. Obwohl Nc allein kein dominanter RUL-Indikator ist, trägt er in Kombination mit Temperatur- und Drucksensoren zur Stabilisierung des Prognosemodells bei, da er mechanische Reaktionen auf thermodynamische Veränderungen widerspiegelt.
+
+Weniger geeignet erscheinen dagegen Sensoren, die entweder eine sehr geringe Varianz aufweisen oder deren Verlauf stark von Flugphasen dominiert wird. In den Graphiken sind diese Signale durch nahezu horizontale Linien oder durch starke, jedoch zyklisch wiederkehrende Schwankungen gekennzeichnet. Da kein klarer Trend in Richtung Ausfall erkennbar ist, liefern sie dem Modell kaum verwertbare Information bezüglich der Degradationsentwicklung. Darüber hinaus zeigen einige Sensoren eine sehr hohe gegenseitige Korrelation, was auf redundante Information hinweist. Eine gezielte Reduktion dieser Variablen kann die Modellkomplexität verringern und Overfitting vorbeugen.
+
+![constants](./images/constant.png)
+
+Zusammenfassend lässt sich aus der Analyse der bereitgestellten Graphiken ableiten, dass insbesondere Sensoren im Hochdruckverdichter-, Brennkammer- und Turbinenbereich – namentlich T30, T40, T48, T50 sowie P30 und P40 – die höchste prognostische Relevanz für die RUL-Vorhersage besitzen. Sie zeigen klare monotone Trends, eine beschleunigte Veränderung in der Spätphase der Lebensdauer und eine signifikante Korrelation zur Zielgröße. Ergänzend liefert die Kerndrehzahl Nc wertvolle mechanische Kontextinformation. Die Auswahl dieser Sensoren ist sowohl datenanalytisch durch die beobachteten Trends als auch physikalisch durch den im Datensatz modellierten Degradationsmechanismus begründet.
 
 ## Modul-Beschreibung
 ```md
@@ -195,7 +244,7 @@ Alle zentralen Parameter des Projekts sind in der `config.py` gebündelt, sodass
 | `WIN_LEN` | `10` | Länge des Sliding Window in Zeitschritten |
 | `LOAD_MODEL` | `True` | Vortrainiertes Modell laden statt komplett neu trainieren |
 
-## CNN-Modell
+## CNN Model
 
 Ein CNN ist eine spezielle Architektur neuronaler Netze, bei der anstelle vollverbundener Schichten (Dense Layer) sogenannte Convolutional Layer zum Einsatz kommen. Ein lernbarer Kernel gleitet dabei über die Eingabe und extrahiert lokale Merkmale, in Bildern beispielsweise Kanten oder Texturen, in diesem RUL-Problem charakteristische Muster im Degradationsverlauf der Sensoren eines Triebwerkes.
 
@@ -708,7 +757,7 @@ Abb. 5: True-RUL vs. Predicted-RUL über Cycles, engine unit 7
 
 Als Beispiel wird Unit 7 genommen, wobei anzumerken ist, dass alle Units ähnlich abschneiden. 
 
-Der MSE ist mit ungefähr 40 auf dem Test-Datensatz in Angesicht der eigenen Implementierung sowie des zugrunde liegenden Problems, relativ gut.
+Der MSE ist mit ungefähr 40 auf dem Test-Datensatz in Angesicht der eigenen Implementierung sowie des zugrunde liegenden Problems, relativ gut. 
 
 Anhand des Plots ist zu erkennen, dass dieser MSE von 40 hauptsächlich durch eine Ungenauigkeit in den ersten Cycles entsteht. Relevanter ist die RUL jedoch Richtung Ende der Lebensdauer. Hier ist eine deutliche Annäherung an die True-RUL erkennbar, weshalb festzuhalten ist, dass solch ein CNN ausreichend gut ist, um RUL Vorhersagen treffen zu können. 
 
@@ -873,7 +922,7 @@ Zu Beginn wurde erst ein normales LSTM - Modell entwickelt. Dort war der minimal
 
 Beim Verlauf des `Trainings-` und des `Validation Losses` sieht man nunmehr keine Zeichen des Overfittings. Beide werden fast kontinuierlich verringert bis auf kleinere Ausreißer. Nach anfänglichen Startschwierigkeiten, verbessert sich das Modell mit jeder Epoche.
 
-## Installation
+## Installationsanleitung
 
 ### Voraussetzungen
 
