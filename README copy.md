@@ -920,6 +920,12 @@ Zu Beginn wurde erst ein normales LSTM - Modell entwickelt. Dort war der minimal
 
 Beim Verlauf des `Trainings-` und des `Validation Losses` sieht man nunmehr keine Zeichen des Overfittings. Beide werden fast kontinuierlich verringert bis auf kleinere Ausreißer. Nach anfänglichen Startschwierigkeiten, verbessert sich das Modell mit jeder Epoche.
 
+## Vergleich CNN vs. bi-LSTM
+
+Im Allgemeinen kann man sagen, dass beide neuronalen Netze sehr gut gelungen sind. Vergleicht man die reinen Daten, so liegt das bidirektionale LSTM ein kleines Stück vor dem CNN. Mit einem `Validation Loss` von ca. **40** bei dem CNN und ca. **26** bei dem bi - LSTM, bzw. einem R2 - Score beim Validation Dataset von ca. **0.92** bei dem CNN und ca. **0.96** bei dem bidirektionalen LSTM sind die Unterschiede relativ klein. Dennoch scheint es, als sei ein bidirektionales LSTM für diesen Datensatz das geeignetere Modell. Vergleicht man beide Graphen mit den Vorhersagen für den Sensor mit der `Unit ID 7`, so erkennt man auch hier nur einen minimalen Unterschied bei der Varianz um die Gerade der Realdaten. Ein bidirektionales LSTM ist genau für solche Zeitreihenanalysen gemacht, was diesen kleinen, aber feinen Unterschied erklärt. Auf der anderen Seite, neigt das bidirektionale LSTM zu Overfitting, weshalb ein `Attention Net` oder der `Early Stop` eingebaut wurden. Im Regelfall ist die Dauer für das Training eines CNN geringer als für ein bi-LSTM. Zusammenfassend kann man sagen, dass das bidirektionale LSTM genauer ist als das CNN, dafür aber Probleme beim Overfitting und Zeitintensität mit sich zieht.
+
+![lstm_unit_seven](./images/lstm_unit_seven.png)
+
 ## Installationsanleitung
 
 ### Voraussetzungen
@@ -942,6 +948,8 @@ cd RUL-Prediction-using-CNN-and-LSTM
 ### 2. Datensatz herunterladen
 
 Den Datensatz `N-CMAPSS_DS01-005.h5` von Kaggle herunterladen:
+
+### Link
 https://www.kaggle.com/datasets/bishals098/nasa-cmapss-2-engine-degradation?resource=download
 
 Die heruntergeladene Datei in den `datasets/`-Ordner des Projekts verschieben:
@@ -984,7 +992,7 @@ Zentrale Parameter wie Pfade, Epochen und Hyperparameter werden in `config.py` i
 
 ```python
 FILENAME: str = "datasets/N-CMAPSS_DS01-005.h5"
-CHECKPOINT_PATH: str = "trained_models/network_checkpoint4.1.pth"
+CHECKPOINT_PATH: str = "models/CNN/network_checkpoint4.1.pth"
 EPOCHS: int = 20
 LEARNING_RATE: float = 1e-5
 BATCH_SIZE: int = 64
